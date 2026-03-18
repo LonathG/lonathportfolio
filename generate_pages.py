@@ -24,6 +24,35 @@ def get_project_dict(p):
         'img_featured': p.get('Featured Image', ''),
     }
 
+def format_project_work(d):
+    name = d['name']
+    services = d['services']
+    img = d['img_main']
+    slug = d['slug']
+    url = f"{slug}.html" if slug else "#"
+    return f'''<div role="listitem" class="w-dyn-item">
+                <div class="project-content">
+                  <a href="{url}" class="project-wrapper-link w-inline-block"><img loading="lazy" src="{img}" alt="{name}" class="project-photo _01">
+                    <div class="left-part"></div>
+                    <div class="right-part"></div>
+                    <div class="top-part"></div>
+                    <div class="bottom-part"></div>
+                  </a>
+                  <div class="margin-20px make-0px">
+                    <div class="project-flex">
+                      <div class="flex-pixel">
+                        <h3 class="project-small-title biger">{name}</h3>
+                        <h3 class="project-small-title biger">{name}</h3>
+                      </div>
+                      <div class="flex-pixel _2">
+                        <h3 class="project-small-title lighter">{services}</h3>
+                        <h3 class="project-small-title lighter">{services}</h3>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>'''
+
 with open('detail_project.html', 'r', encoding='utf-8') as f:
     template_html = f.read()
 
@@ -86,6 +115,21 @@ for p in projects:
         flags=re.DOTALL
     )
     
+    # 7. Other projects
+    other_projects_html = []
+    for other_p in projects:
+        other_d = get_project_dict(other_p)
+        if other_d['slug'] and other_d['slug'] != d['slug']:
+            other_projects_html.append(format_project_work(other_d))
+    
+    other_projects_str = "\n".join(other_projects_html)
+    
+    # Replace the exact wrapper in detail_project.html
+    pattern_other = re.compile(r'<div role="list" class="project-grid w-dyn-items">.*?<div class="w-dyn-empty">\s*<div>No items found\.</div>\s*</div>', re.DOTALL)
+    
+    replacement_other = f'<div role="list" class="project-grid w-dyn-items">\n{other_projects_str}\n</div>'
+    html = pattern_other.sub(replacement_other, html, 1)
+
     out_file = f"{d['slug']}.html"
     with open(out_file, 'w', encoding='utf-8') as f:
         f.write(html)
@@ -108,8 +152,6 @@ print("Updated index.html links")
 with open('work.html', 'r', encoding='utf-8') as f:
     text_work = f.read()
 
-# in work.html there's also an href="#" for the Home menu link (in line 157)
-# Let's be more specific, replace <a href="#" class="project-wrapper-link
 for p in projects:
     slug = p.get('Slug', '')
     url = f"{slug}.html" if slug else "#"
